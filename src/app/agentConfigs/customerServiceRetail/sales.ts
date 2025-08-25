@@ -27,7 +27,8 @@ export const salesAgent = new RealtimeAgent({
         required: ['category'],
         additionalProperties: false,
       },
-      execute: async (input: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      execute: async (_input: any) => {
         const { category } = input as { category: string };
         const items = [
           { item_id: 101, type: 'snowboard', name: 'Alpine Blade', retail_price_usd: 450, sale_price_usd: 360, sale_discount_pct: 20 },
@@ -64,7 +65,8 @@ export const salesAgent = new RealtimeAgent({
         required: ['item_id'],
         additionalProperties: false,
       },
-      execute: async (input: any) => ({ success: true }),
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      execute: async (_input: any) => ({ success: true }),
     }),
 
     tool({
@@ -90,7 +92,8 @@ export const salesAgent = new RealtimeAgent({
         required: ['item_ids', 'phone_number'],
         additionalProperties: false,
       },
-      execute: async (input: any) => ({ checkoutUrl: 'https://example.com/checkout' }),
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      execute: async (_input: any) => ({ checkoutUrl: 'https://example.com/checkout' }),
     }),
   ],
 

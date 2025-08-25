@@ -104,7 +104,6 @@ export default function PrestigeTranscript() {
             
             const roleInfo = getRoleInfo(item.role, item.agentName);
             const isUser = item.role === 'user';
-            const isAssistant = item.role === 'assistant';
             const isBreadcrumb = item.type === 'BREADCRUMB';
             const isMessage = item.type === 'MESSAGE';
 
@@ -171,7 +170,7 @@ export default function PrestigeTranscript() {
                       {item.data?.correction && (
                         <div className="mt-3 pt-3 border-t border-white/10">
                           <p className="text-xs text-green-400/80">
-                            ✨ Better phrasing: "{item.data.correction}"
+                            ✨ Better phrasing: &quot;{item.data.correction}&quot;
                           </p>
                         </div>
                       )}

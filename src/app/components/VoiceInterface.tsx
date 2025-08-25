@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import PrestigeTranscript from './PrestigeTranscript';
 
@@ -40,14 +40,9 @@ export default function VoiceInterface({
   completedSteps,
   currentAgentName,
 }: VoiceInterfaceProps) {
-  const [time, setTime] = useState(new Date());
   const isConnected = sessionStatus === 'CONNECTED';
   const isConnecting = sessionStatus === 'CONNECTING';
 
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   return (
     <div className="h-screen flex flex-col bg-[#0F0F0F] text-white overflow-hidden">
@@ -180,7 +175,7 @@ export default function VoiceInterface({
         {/* Progress Steps (Top Right Corner) */}
         <div className="absolute top-24 right-8 glass rounded-xl px-4 py-3 backdrop-blur-md">
           <div className="flex items-center space-x-1">
-            {STEPS.map((step, index) => (
+            {STEPS.map((step) => (
               <div
                 key={step.id}
                 className="relative group"

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRightIcon, CheckCircleIcon, ClockIcon } from '@radix-ui/react-icons';
+import { CheckCircleIcon } from '@radix-ui/react-icons';
 
 interface LearningProgressProps {
   completedSteps: string[];
@@ -57,10 +57,9 @@ export default function LearningProgress({
         <h3 className="text-sm font-medium text-gray-700 mb-3">
           Check-in Process Steps
         </h3>
-        {LESSON_STEPS.map((step, index) => {
+        {LESSON_STEPS.map((step) => {
           const isCompleted = completedSteps.includes(step.id);
           const isCurrent = currentStep === step.id;
-          const isUpcoming = !isCompleted && !isCurrent;
 
           return (
             <div
@@ -95,7 +94,7 @@ export default function LearningProgress({
       {/* Motivation Message */}
       <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
         <p className="text-sm text-blue-800 font-medium">
-          💪 Keep going! You're making great progress!
+          💪 Keep going! You&apos;re making great progress!
         </p>
       </div>
 
@@ -111,7 +110,7 @@ export default function LearningProgress({
           </li>
           <li className="flex items-start">
             <span className="text-blue-500 mr-2">•</span>
-            Use "please" and "thank you" often
+            Use &quot;please&quot; and &quot;thank you&quot; often
           </li>
           <li className="flex items-start">
             <span className="text-blue-500 mr-2">•</span>

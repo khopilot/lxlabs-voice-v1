@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
 // Components
@@ -15,21 +14,14 @@ import type { RealtimeAgent } from '@openai/agents/realtime';
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { useEvent } from "@/app/contexts/EventContext";
 import { useRealtimeSession } from "./hooks/useRealtimeSession";
-import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
 import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
-import useAudioDownload from "./hooks/useAudioDownload";
 
 // Configs
-import { allAgentSets, defaultAgentSetKey } from "@/app/agentConfigs";
-import { hospitalityTrainingScenario, hospitalityTrainingCompanyName } from "@/app/agentConfigs/hospitalityTraining";
+import { allAgentSets } from "@/app/agentConfigs";
+import { hospitalityTrainingScenario } from "@/app/agentConfigs/hospitalityTraining";
 
-// Map for SDK scenarios - simplified for LXLabs
-const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
-  hospitalityTraining: hospitalityTrainingScenario,
-};
 
 function App() {
-  const searchParams = useSearchParams()!;
   const { addTranscriptMessage, addTranscriptBreadcrumb } = useTranscript();
   const { logClientEvent, logServerEvent } = useEvent();
 
@@ -39,7 +31,6 @@ function App() {
   
   // Session State
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>("DISCONNECTED");
-  const [userText, setUserText] = useState("");
   const [isPTTActive, setIsPTTActive] = useState(false);
   const [isPTTUserSpeaking, setIsPTTUserSpeaking] = useState(false);
   const [isAudioPlaybackEnabled, setIsAudioPlaybackEnabled] = useState(() => {
@@ -49,11 +40,9 @@ function App() {
   });
   
   // Learning Progress State
-  const [currentLesson, setCurrentLesson] = useState("Check-in Practice");
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState("greeting");
-  const [vocabularyCount, setVocabularyCount] = useState(0);
-  const [practiceTime, setPracticeTime] = useState(0);
+  const [, setPracticeTime] = useState(0);
 
   // Refs
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
@@ -78,7 +67,7 @@ function App() {
   }, [sdkAudioElement]);
 
   // Realtime Session Hook
-  const { connect, disconnect, sendUserText, sendEvent, interrupt, mute } = useRealtimeSession({
+  const { connect, disconnect, sendEvent, interrupt, mute } = useRealtimeSession({
     onConnectionChange: (s) => setSessionStatus(s as SessionStatus),
     onAgentHandoff: (agentName: string) => {
       handoffTriggeredRef.current = true;
@@ -98,8 +87,6 @@ function App() {
     },
   });
 
-  // Audio download hook (kept for recording functionality)
-  const { startRecording, stopRecording, downloadRecording } = useAudioDownload();
 
   // Session history hook
   useHandleSessionHistory();
@@ -210,11 +197,6 @@ function App() {
         },
       });
 
-      // Start recording when connected
-      if (sessionStatus === "CONNECTED" && audioElementRef.current?.srcObject) {
-        const remoteStream = audioElementRef.current.srcObject as MediaStream;
-        startRecording(remoteStream);
-      }
     } catch (err) {
       console.error("Error connecting via SDK:", err);
       setSessionStatus("DISCONNECTED");
@@ -226,7 +208,6 @@ function App() {
     disconnect();
     setSessionStatus("DISCONNECTED");
     setIsPTTUserSpeaking(false);
-    stopRecording();
   };
 
   // Send simulated user message
@@ -340,17 +321,6 @@ function App() {
     }
   }, [sessionStatus, isAudioPlaybackEnabled]);
 
-  // Recording management
-  useEffect(() => {
-    if (sessionStatus === "CONNECTED" && audioElementRef.current?.srcObject) {
-      const remoteStream = audioElementRef.current.srcObject as MediaStream;
-      startRecording(remoteStream);
-    }
-
-    return () => {
-      stopRecording();
-    };
-  }, [sessionStatus]);
 
   // Load preferences
   useEffect(() => {

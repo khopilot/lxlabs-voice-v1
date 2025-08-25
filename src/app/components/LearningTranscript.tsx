@@ -53,14 +53,14 @@ export default function LearningTranscript() {
               Ready to Practice?
             </h3>
             <p className="text-sm text-gray-500 max-w-sm mx-auto">
-              Click "Start Practice" above to begin your hospitality English training session.
+              Click &quot;Start Practice&quot; above to begin your hospitality English training session.
             </p>
           </div>
         ) : (
           <>
             {items
               .filter(item => item.type === 'MESSAGE' && !item.isHidden)
-              .map((item, index) => {
+              .map((item) => {
                 const roleInfo = getRoleLabel(item.role);
                 const isUser = item.role === 'user';
                 
