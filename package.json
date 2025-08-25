@@ -1,7 +1,16 @@
 {
-  "name": "realtime-examples",
-  "version": "0.1.0",
+  "name": "lxlabs-hospitality-training",
+  "version": "1.0.0",
   "private": true,
+  "description": "AI-powered English conversation practice for Cambodian hospitality professionals",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/khopilot/lxlabs-voice-v1.git"
+  },
+  "author": "LXLabs",
+  "license": "MIT",
+  "homepage": "https://lxlabs-voice-v1.vercel.app",
+  "keywords": ["hospitality", "training", "english", "ai", "voice", "cambodia", "hotel"],
   "scripts": {
     "dev": "next dev",
     "build": "next build",

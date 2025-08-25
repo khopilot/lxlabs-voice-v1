@@ -1,0 +1,9 @@
+This file is a placeholder for the Open Graph image (og-image.png).
+
+For production deployment, replace this with a 1200x630 PNG image featuring:
+- LXLabs branding
+- "Hospitality Training Platform" text  
+- Visual elements representing AI voice training
+- Professional hospitality imagery (hotel, front desk, etc.)
+
+The image should be saved as /public/og-image.png to match the metadata configuration in layout.tsx.
