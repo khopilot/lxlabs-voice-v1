@@ -276,7 +276,7 @@ true/false/need_more_information
           },
         ];
         const model = "o4-mini";
-        console.log(`checking order eligibility with model=${model}`);
+        // Checking order eligibility
 
         const response = await fetch("/api/responses", {
           method: "POST",
@@ -296,7 +296,7 @@ true/false/need_more_information
           .find((i: any) => i.type === 'message' && i.role === 'assistant')
           ?.content?.find((c: any) => c.type === 'output_text')?.text ?? '';
 
-        console.log(text || output);
+        // Processing eligibility result
         return { result: text || output };
       },
     }),

@@ -294,9 +294,12 @@ function App() {
     if (audioElementRef.current) {
       if (isAudioPlaybackEnabled) {
         audioElementRef.current.muted = false;
-        audioElementRef.current.play().catch((err) => {
-          console.warn("Autoplay may be blocked by browser:", err);
-        });
+        // Only attempt autoplay after user interaction to avoid console warnings
+        if (sessionStatus === 'CONNECTED') {
+          audioElementRef.current.play().catch(() => {
+            // Silently handle autoplay blocking - this is expected browser behavior
+          });
+        }
       } else {
         audioElementRef.current.muted = true;
         audioElementRef.current.pause();

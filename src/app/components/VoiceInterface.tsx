@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import PrestigeTranscript from './PrestigeTranscript';
+import { getStepContent, StepContent } from '../data/lessonContent';
 
 interface VoiceInterfaceProps {
   sessionStatus: string;
@@ -42,6 +43,7 @@ export default function VoiceInterface({
 }: VoiceInterfaceProps) {
   const isConnected = sessionStatus === 'CONNECTED';
   const isConnecting = sessionStatus === 'CONNECTING';
+  const [selectedStep, setSelectedStep] = useState<StepContent | null>(null);
 
 
   return (
@@ -180,18 +182,22 @@ export default function VoiceInterface({
                 key={step.id}
                 className="relative group"
               >
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all cursor-pointer ${
+                <button
+                  onClick={() => {
+                    const content = getStepContent(step.id);
+                    if (content) setSelectedStep(content);
+                  }}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all cursor-pointer hover:scale-110 ${
                     completedSteps.includes(step.id)
-                      ? 'bg-green-500/20 text-green-400'
+                      ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
                       : currentStep === step.id
-                        ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/50'
-                        : 'bg-gray-800/50 text-gray-500'
+                        ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/50 hover:bg-blue-500/30'
+                        : 'bg-gray-800/50 text-gray-500 hover:bg-gray-700/50'
                   }`}
-                  title={step.label}
+                  title={`Click to see: ${step.label}`}
                 >
                   {step.icon}
-                </div>
+                </button>
                 {/* Tooltip */}
                 <div className="absolute top-10 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                   <div className="bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
@@ -203,6 +209,101 @@ export default function VoiceInterface({
           </div>
         </div>
       </div>
+
+      {/* Lesson Content Modal */}
+      {selectedStep && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="text-3xl mb-2">{selectedStep.icon}</div>
+                  <h2 className="text-2xl font-bold text-white">{selectedStep.title}</h2>
+                </div>
+                <button
+                  onClick={() => setSelectedStep(null)}
+                  className="text-white/80 hover:text-white text-2xl leading-none"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="overflow-y-auto max-h-[calc(80vh-120px)] p-6 space-y-6">
+              {/* Key Phrases */}
+              <div>
+                <h3 className="text-lg font-semibold text-blue-400 mb-3">📝 Key Phrases to Learn</h3>
+                <div className="space-y-2">
+                  {selectedStep.keyPhrases.map((phrase, i) => (
+                    <div key={i} className="bg-gray-800 rounded-lg p-3 text-white">
+                      &quot;{phrase}&quot;
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Common Mistakes */}
+              <div>
+                <h3 className="text-lg font-semibold text-yellow-400 mb-3">⚠️ Common Mistakes</h3>
+                <div className="space-y-2">
+                  {selectedStep.commonMistakes.map((mistake, i) => (
+                    <div key={i} className="bg-gray-800 rounded-lg p-3 text-sm text-gray-300">
+                      {mistake}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tips */}
+              <div>
+                <h3 className="text-lg font-semibold text-green-400 mb-3">💡 Tips</h3>
+                <ul className="space-y-2">
+                  {selectedStep.tips.map((tip, i) => (
+                    <li key={i} className="flex items-start">
+                      <span className="text-green-400 mr-2">•</span>
+                      <span className="text-gray-300">{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Vocabulary */}
+              <div>
+                <h3 className="text-lg font-semibold text-purple-400 mb-3">📚 Vocabulary</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {selectedStep.vocabulary.map((item, i) => (
+                    <div key={i} className="bg-gray-800 rounded-lg p-3">
+                      <div className="text-white font-medium">{item.word}</div>
+                      <div className="text-gray-400 text-sm">{item.meaning}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Example Dialogue */}
+              <div>
+                <h3 className="text-lg font-semibold text-cyan-400 mb-3">🗣️ Example Dialogue</h3>
+                <div className="space-y-2">
+                  {selectedStep.exampleDialogue.map((line, i) => (
+                    <div key={i} className={`flex ${line.speaker === 'You' ? 'justify-start' : 'justify-end'}`}>
+                      <div className={`max-w-[70%] rounded-lg p-3 ${
+                        line.speaker === 'You'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-700 text-gray-200'
+                      }`}>
+                        <div className="text-xs opacity-70 mb-1">{line.speaker}</div>
+                        <div>{line.text}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

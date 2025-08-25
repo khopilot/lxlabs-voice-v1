@@ -41,7 +41,7 @@ export function useHandleSessionHistory(getCurrentAgent?: () => string) {
       try {
         return JSON.parse(val);
       } catch {
-        console.warn('Failed to parse JSON:', val);
+        // Failed to parse JSON, returning as-is
         return val;
       }
     }
@@ -86,7 +86,7 @@ export function useHandleSessionHistory(getCurrentAgent?: () => string) {
   }
 
   function handleHistoryAdded(item: any) {
-    console.log("[handleHistoryAdded] ", item);
+    // Handle new message in history
     if (!item || item.type !== 'message') return;
 
     const { itemId, role, content = [] } = item;
@@ -112,7 +112,7 @@ export function useHandleSessionHistory(getCurrentAgent?: () => string) {
   }
 
   function handleHistoryUpdated(items: any[]) {
-    console.log("[handleHistoryUpdated] ", items);
+    // Handle history updates
     items.forEach((item: any) => {
       if (!item || item.type !== 'message') return;
 
@@ -145,8 +145,9 @@ export function useHandleSessionHistory(getCurrentAgent?: () => string) {
     if (itemId) {
       // Check if this is user input audio transcription
       if (item.type === "conversation.item.input_audio_transcription.completed") {
-        // Add user message to transcript
-        addTranscriptMessage(itemId, 'user', finalTranscript, false, undefined);
+        // UPDATE the existing user message (don't add a new one)
+        // This fixes the bug where user speech stays as "[Transcribing...]"
+        updateTranscriptMessage(itemId, finalTranscript, false);
       } else {
         // Update existing assistant message
         updateTranscriptMessage(itemId, finalTranscript, false);
@@ -170,7 +171,7 @@ export function useHandleSessionHistory(getCurrentAgent?: () => string) {
   }
 
   function handleGuardrailTripped(details: any, _agent: any, guardrail: any) {
-    console.log("[guardrail tripped]", details, _agent, guardrail);
+    // Handle guardrail violation
     const moderation = extractModeration(guardrail.result.output.outputInfo);
     logServerEvent({ type: 'guardrail_tripped', payload: moderation });
 
