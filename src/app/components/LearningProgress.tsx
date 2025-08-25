@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircleIcon } from '@radix-ui/react-icons';
+import { CheckCircledIcon } from '@radix-ui/react-icons';
 
 interface LearningProgressProps {
   completedSteps: string[];
@@ -81,7 +81,7 @@ export default function LearningProgress({
                 </div>
               </div>
               {isCompleted && (
-                <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                <CheckCircledIcon className="w-5 h-5 text-green-600" />
               )}
               {isCurrent && (
                 <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />

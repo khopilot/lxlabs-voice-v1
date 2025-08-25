@@ -27,8 +27,7 @@ export const salesAgent = new RealtimeAgent({
         required: ['category'],
         additionalProperties: false,
       },
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      execute: async (_input: any) => {
+      execute: async (input: any) => {
         const { category } = input as { category: string };
         const items = [
           { item_id: 101, type: 'snowboard', name: 'Alpine Blade', retail_price_usd: 450, sale_price_usd: 360, sale_discount_pct: 20 },

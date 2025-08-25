@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useTranscript } from '../contexts/TranscriptContext';
 
 export default function LearningTranscript() {
-  const { items = [] } = useTranscript();
+  const { transcriptItems: items = [] } = useTranscript();
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
