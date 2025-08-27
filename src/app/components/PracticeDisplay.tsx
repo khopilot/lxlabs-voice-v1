@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircledIcon, CrossCircledIcon, ReloadIcon } from '@radix-ui/react-icons';
+import { ReloadIcon } from '@radix-ui/react-icons';
 
 interface PracticeDisplayProps {
   currentPhrase: string;
@@ -120,7 +120,7 @@ export default function PracticeDisplay({
             <div className="mt-4 p-4 bg-white rounded-lg shadow-inner">
               <div className="text-sm text-gray-500 mb-1">You said:</div>
               <div className="text-xl font-semibold text-gray-700">
-                "{studentResponse}"
+                &ldquo;{studentResponse}&rdquo;
               </div>
             </div>
           )}
@@ -135,7 +135,7 @@ export default function PracticeDisplay({
             <div>
               <div className="font-semibold text-yellow-800">Hint:</div>
               <div className="text-yellow-700">
-                Start with: "{currentPhrase.split(' ').slice(0, 2).join(' ')}..."
+                Start with: &ldquo;{currentPhrase.split(' ').slice(0, 2).join(' ')}...&rdquo;
               </div>
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function PracticeDisplay({
       {showEncouragement && (
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 animate-fade-in">
           <p className="text-center text-purple-800 font-medium">
-            💪 Keep trying! You're doing great! Mistakes help us learn!
+            💪 Keep trying! You&apos;re doing great! Mistakes help us learn!
           </p>
         </div>
       )}
@@ -194,7 +194,7 @@ export default function PracticeDisplay({
         <div className="text-xs text-gray-500 space-y-1">
           <div>💡 Tip: Speak slowly and clearly</div>
           <div>🎯 Focus on one word at a time</div>
-          <div>🔊 Say "Help" if you need assistance</div>
+          <div>🔊 Say &ldquo;Help&rdquo; if you need assistance</div>
         </div>
       </div>
 

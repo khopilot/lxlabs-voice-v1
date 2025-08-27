@@ -67,7 +67,7 @@ export const databaseTools = [
       const { studentId, lesson, completedStep, newVocabulary = [], errors = [], practiceTime = 0 } = input as any;
       
       // Get or create student record
-      let progress: StudentProgress = studentDatabase.get(studentId) || {
+      const progress: StudentProgress = studentDatabase.get(studentId) || {
         studentId,
         currentLesson: lesson || "check_in",
         completedSteps: [] as string[],
@@ -211,7 +211,7 @@ export const performanceTools = [
       } = input as any;
       
       // Get or create metrics
-      let metrics = sessionMetrics.get(studentId) || {
+      const metrics = sessionMetrics.get(studentId) || {
         responseTime: 0,
         hesitationCount: 0,
         attemptCount: 0,
