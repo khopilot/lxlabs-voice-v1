@@ -79,6 +79,7 @@ function App() {
     onConnectionChange: (s) => setSessionStatus(s as SessionStatus),
     onAgentHandoff: (agentName: string) => {
       handoffTriggeredRef.current = true;
+      addTranscriptBreadcrumb(`Handoff → ${agentName}`);
       setSelectedAgentName(agentName);
       
       // Update progress based on agent
@@ -134,10 +135,10 @@ function App() {
     };
   }, [sessionStatus]);
 
-  // Initialize agent configuration - always use hospitalityTraining for LXLabs
+  // Initialize agent configuration - hospitalityTraining scenario; start with coordinator for intro
   useEffect(() => {
     const agents = allAgentSets['hospitalityTraining'];
-    const agentKeyToUse = agents[0]?.name || "";
+    const agentKeyToUse = agents[0]?.name || ""; // practiceCoordinator is first in scenario
     setSelectedAgentName(agentKeyToUse);
     setSelectedAgentConfigSet(agents);
   }, []);
@@ -270,7 +271,8 @@ function App() {
     });
 
     if (shouldTriggerResponse) {
-      sendSimulatedUserMessage('Sous-dey! I want to practice hotel check-in');
+      // Keep the kickoff minimal to encourage a very short response
+      sendSimulatedUserMessage('hi');
     }
   };
 

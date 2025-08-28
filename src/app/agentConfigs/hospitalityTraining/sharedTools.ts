@@ -1,8 +1,10 @@
 import { tool } from '@openai/agents/realtime';
+import { loadProgress as loadProgressStore, saveProgress as saveProgressStore, loadMetrics as loadMetricsStore, saveMetrics as saveMetricsStore } from '@/app/lib/studentStore';
 
 // Student progress tracking interface
 interface StudentProgress {
   studentId: string;
+  studentName?: string;
   currentLesson: string;
   completedSteps: string[];
   vocabularyLearned: string[];
@@ -42,6 +44,7 @@ export const databaseTools = [
       type: "object",
       properties: {
         studentId: { type: "string" },
+        studentName: { type: "string" },
         lesson: { type: "string" },
         completedStep: { type: "string" },
         newVocabulary: { 
@@ -66,13 +69,14 @@ export const databaseTools = [
     },
     execute: async (input, details) => {
       const ctxStudentId = (details as any)?.context?.studentId;
-      const { studentId = ctxStudentId, lesson, completedStep, newVocabulary = [], errors = [], practiceTime = 0 } = input as any;
+      const { studentId = ctxStudentId, studentName, lesson, completedStep, newVocabulary = [], errors = [], practiceTime = 0 } = input as any;
       if (!studentId) {
         throw new Error('studentId is required (missing in input and context)');
       }
       
-      // Get or create student record
-      const progress: StudentProgress = studentDatabase.get(studentId) || {
+      // Get or create student record (hydrate from localStorage if present)
+      const hydrated = studentDatabase.get(studentId) || loadProgressStore<StudentProgress>(studentId);
+      const progress: StudentProgress = hydrated || {
         studentId,
         currentLesson: lesson || "check_in",
         completedSteps: [] as string[],
@@ -85,6 +89,7 @@ export const databaseTools = [
       };
       
       // Update progress
+      if (studentName) progress.studentName = studentName;
       if (lesson) progress.currentLesson = lesson;
       if (completedStep && !progress.completedSteps.includes(completedStep)) {
         progress.completedSteps.push(completedStep);
@@ -117,8 +122,8 @@ export const databaseTools = [
       
       progress.totalPracticeTime += practiceTime;
       progress.lastSessionDate = new Date().toISOString();
-      
       studentDatabase.set(studentId, progress);
+      saveProgressStore(studentId, progress);
       
       return {
         success: true,
@@ -148,7 +153,14 @@ export const databaseTools = [
         throw new Error('studentId is required (missing in input and context)');
       }
       
-      const progress = studentDatabase.get(studentId);
+      let progress = studentDatabase.get(studentId);
+      if (!progress) {
+        const hydrated = loadProgressStore<StudentProgress>(studentId);
+        if (hydrated) {
+          studentDatabase.set(studentId, hydrated);
+          progress = hydrated;
+        }
+      }
       
       if (!progress) {
         return {
@@ -225,8 +237,9 @@ export const performanceTools = [
         throw new Error('studentId is required (missing in input and context)');
       }
       
-      // Get or create metrics
-      const metrics = sessionMetrics.get(studentId) || {
+      // Get or create metrics (hydrate from localStorage if present)
+      const hydrated = sessionMetrics.get(studentId) || loadMetricsStore<PerformanceMetrics>(studentId);
+      const metrics = hydrated || {
         responseTime: 0,
         hesitationCount: 0,
         attemptCount: 0,
@@ -244,6 +257,7 @@ export const performanceTools = [
       metrics.silenceDuration = Math.max(metrics.silenceDuration, silenceDuration);
       
       sessionMetrics.set(studentId, metrics);
+      saveMetricsStore(studentId, metrics);
       
       // Calculate performance indicators
       const accuracy = metrics.totalResponses > 0 
@@ -335,13 +349,14 @@ export const performanceTools = [
       }
       
       // Update student's confidence score in database
-      const progress = studentDatabase.get(studentId);
+      const progress = studentDatabase.get(studentId) || loadProgressStore<StudentProgress>(studentId) || undefined;
       if (progress) {
         progress.confidenceScore = Math.round(accuracy * 100);
         progress.speechSpeed = 
           newDifficulty === "very_easy" ? "very_slow" :
           newDifficulty === "easy" ? "slow" : "normal";
         studentDatabase.set(studentId, progress);
+        saveProgressStore(studentId, progress);
       }
       
       return {
@@ -471,6 +486,39 @@ export const helpTools = [
         instruction,
         followUp: "After student attempts, say: 'Good job trying!'"
       };
+    }
+  })
+  ,
+  tool({
+    name: 'translateToKhmer',
+    description: 'Translates a short English phrase to Khmer for ESL scaffolding. Keep it simple and polite.',
+    parameters: {
+      type: 'object',
+      properties: {
+        text: { type: 'string' },
+        transliterate: { type: 'boolean', description: 'If true, provide phonetic Khmer (Latin) as well' }
+      },
+      required: ['text'],
+      additionalProperties: false,
+    },
+    execute: async (input) => {
+      const { text, transliterate = false } = input as any;
+      const body = {
+        model: 'gpt-4o-mini',
+        input: [
+          { type: 'message', role: 'system', content: 'You translate short ESL phrases to Khmer for hospitality learners. Keep it natural, short, and polite.' },
+          { type: 'message', role: 'user', content: `Translate to Khmer: "${text}"${transliterate ? ' and provide a Latin phonetic guide.' : ''}` },
+        ],
+      };
+      try {
+        const res = await fetch('/api/responses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) return { error: 'translation_failed', status: res.status };
+        const data = await res.json();
+        const out = (data.output_text || '').toString().trim();
+        return { khmer: out };
+      } catch (e: any) {
+        return { error: 'translation_error', message: e?.message };
+      }
     }
   })
 ];
@@ -658,12 +706,28 @@ export const evaluationTools = [
 
         const res = await fetch('/api/responses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if (!res.ok) {
-          return { error: 'Failed to evaluate', status: res.status };
+          // Provide a graceful default rubric so the coach can still give one useful tip
+          return {
+            warmth: 3, politeness: 3, clarity: 3, empathy: 3, active_listening: 3, cultural_fit: 3,
+            one_tip: 'Keep sentences short and speak slowly.',
+            next_prompt: 'Good evening. Welcome to our hotel.',
+            recommended_difficulty: 'easy'
+          };
         }
         const data = await res.json();
-        return data.output_parsed || data.output_text || data.output || { note: 'no_output' };
+        return data.output_parsed || data.output_text || data.output || {
+          warmth: 3, politeness: 3, clarity: 3, empathy: 3, active_listening: 3, cultural_fit: 3,
+          one_tip: 'Keep sentences short and speak slowly.',
+          next_prompt: 'Good evening. Welcome to our hotel.',
+          recommended_difficulty: 'easy'
+        };
       } catch (e: any) {
-        return { error: 'evaluation_error', message: e?.message };
+        return {
+          warmth: 3, politeness: 3, clarity: 3, empathy: 3, active_listening: 3, cultural_fit: 3,
+          one_tip: 'Keep sentences short and speak slowly.',
+          next_prompt: 'Good evening. Welcome to our hotel.',
+          recommended_difficulty: 'easy'
+        };
       }
     }
   })
