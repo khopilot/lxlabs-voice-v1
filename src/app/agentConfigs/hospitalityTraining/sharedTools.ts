@@ -721,7 +721,7 @@ export const evaluationTools = [
           next_prompt: 'Good evening. Welcome to our hotel.',
           recommended_difficulty: 'easy'
         };
-      } catch (e: any) {
+      } catch {
         return {
           warmth: 3, politeness: 3, clarity: 3, empathy: 3, active_listening: 3, cultural_fit: 3,
           one_tip: 'Keep sentences short and speak slowly.',
