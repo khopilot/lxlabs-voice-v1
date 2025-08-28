@@ -3,8 +3,12 @@ import { z } from "zod";
 // Define the allowed moderation categories only once
 export const MODERATION_CATEGORIES = [
   "OFFENSIVE",
-  "OFF_BRAND",
+  "HARASSMENT",
+  "SEXUAL",
   "VIOLENCE",
+  "SELF_HARM",
+  "PII",
+  "OFF_BRAND",
   "NONE",
 ] as const;
 

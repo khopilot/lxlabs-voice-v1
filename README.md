@@ -19,8 +19,8 @@ This platform provides immersive, voice-first English training for hospitality w
 Built with modern web technologies for optimal performance:
 
 - **Next.js 15** - React framework for production
-- **OpenAI Realtime API** - Low-latency voice conversations
-- **OpenAI Agents SDK** - Advanced agent orchestration
+- **Realtime Voice API** - Low-latency voice conversations
+- **Agents SDK** - Advanced agent orchestration
 - **TypeScript** - Type-safe development
 - **Tailwind CSS** - Modern, responsive design
 - **Vercel** - Optimized deployment platform
@@ -48,7 +48,7 @@ Built with modern web technologies for optimal performance:
 ### Prerequisites
 
 - Node.js 18+ installed
-- OpenAI API key with Realtime API access
+- API key with realtime voice access
 
 ### Local Development
 
@@ -66,7 +66,7 @@ Built with modern web technologies for optimal performance:
 3. **Configure environment**
    ```bash
    cp .env.sample .env.local
-   # Add your OpenAI API key to .env.local
+   # Add your API key to .env.local
    OPENAI_API_KEY=your_api_key_here
    ```
 
@@ -106,7 +106,7 @@ npm start
 
 For production deployment, ensure:
 - Environment variables are properly configured
-- OpenAI API limits are appropriate for expected usage
+- API limits are appropriate for expected usage
 - Content delivery network is optimized for your target region
 
 ## 🤝 Contributing

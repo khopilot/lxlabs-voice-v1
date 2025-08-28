@@ -23,10 +23,14 @@ export async function runGuardrailClassifier(
       </message>
 
       <output_classes>
-      - OFFENSIVE: Content that includes hate speech, discriminatory language, insults, slurs, or harassment.
-      - OFF_BRAND: Content that discusses competitors in a disparaging way.
-      - VIOLENCE: Content that includes explicit threats, incitement of harm, or graphic descriptions of physical injury or violence.
-      - NONE: If no other classes are appropriate and the message is fine.
+      - OFFENSIVE: Hate speech, discriminatory language, slurs, insults.
+      - HARASSMENT: Bullying, targeted harassment, threats of non-physical harm.
+      - SEXUAL: Overtly sexual content, sexual services, explicit adult content.
+      - VIOLENCE: Threats, incitement of harm, graphic injury descriptions.
+      - SELF_HARM: Self-harm or suicide encouragement, instructions, admissions.
+      - PII: Requests for or exposure of personal data (passport, phone, email, address).
+      - OFF_BRAND: Disparaging competitor claims or non-educational brand comparisons.
+      - NONE: No issues; safe and appropriate.
       </output_classes>
       `,
     },

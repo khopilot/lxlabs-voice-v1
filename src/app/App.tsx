@@ -4,7 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 // Components
+import dynamic from "next/dynamic";
 import VoiceInterface from "./components/VoiceInterface";
+import ErrorBoundary from "./components/ErrorBoundary";
+import ConnectionBanner from "./components/ConnectionBanner";
+import { useWebVitalsLogger } from "./hooks/useWebVitals";
 
 // Types
 import { SessionStatus } from "@/app/types";
@@ -18,10 +22,13 @@ import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
 
 // Configs
 import { allAgentSets } from "@/app/agentConfigs";
-import { hospitalityTrainingScenario } from "@/app/agentConfigs/hospitalityTraining";
+import { hospitalityTrainingScenario, hospitalityTrainingCompanyName } from "@/app/agentConfigs/hospitalityTraining";
+import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
 
 
 function App() {
+  // Web Vitals in dev for quick UX checks
+  useWebVitalsLogger(process.env.NODE_ENV !== 'production');
   const { addTranscriptMessage, addTranscriptBreadcrumb } = useTranscript();
   const { logClientEvent, logServerEvent } = useEvent();
 
@@ -38,6 +45,8 @@ function App() {
     const stored = localStorage.getItem('audioPlaybackEnabled');
     return stored ? stored === 'true' : true;
   });
+  // Stable learner identity for tools and persistence
+  const [studentId, setStudentId] = useState<string>("");
   
   // Learning Progress State
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
@@ -134,6 +143,19 @@ function App() {
     setSelectedAgentConfigSet(agents);
   }, []);
 
+  // Ensure a stable studentId exists
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storedId = localStorage.getItem('studentId');
+    if (storedId) {
+      setStudentId(storedId);
+    } else {
+      const newId = `student_${uuidv4().slice(0, 8)}`;
+      localStorage.setItem('studentId', newId);
+      setStudentId(newId);
+    }
+  }, []);
+
   // Update session when connected
   useEffect(() => {
     if (sessionStatus === "CONNECTED" && selectedAgentConfigSet && selectedAgentName) {
@@ -156,7 +178,8 @@ function App() {
     logClientEvent({ url: "/session" }, "fetch_session_token_request");
     const tokenResponse = await fetch("/api/session");
     const data = await tokenResponse.json();
-    logServerEvent(data, "fetch_session_token_response");
+    // Avoid logging sensitive secrets; only log metadata
+    logServerEvent({ ok: !!data?.client_secret?.value }, "fetch_session_token_response_sanitized");
     
     if (!data.client_secret?.value) {
       logClientEvent(data, "error.no_ephemeral_key");
@@ -183,17 +206,17 @@ function App() {
         reorderedAgents.unshift(agent);
       }
 
-      // Temporarily disable guardrails to avoid API errors
-      // const guardrail = createModerationGuardrail(hospitalityTrainingCompanyName);
+      // Enable moderation guardrails tuned for hospitality
+      const guardrail = createModerationGuardrail(hospitalityTrainingCompanyName);
 
       await connect({
         getEphemeralKey: async () => EPHEMERAL_KEY,
         initialAgents: reorderedAgents,
         audioElement: sdkAudioElement,
-        // outputGuardrails: [guardrail],
-        outputGuardrails: [], // Disabled temporarily
+        outputGuardrails: [guardrail],
         extraContext: {
           addTranscriptBreadcrumb,
+          studentId,
         },
       });
 
@@ -233,9 +256,9 @@ function App() {
       ? null
       : {
           type: 'server_vad',
-          threshold: 0.7,
+          threshold: 0.9,
           prefix_padding_ms: 300,
-          silence_duration_ms: 200,
+          silence_duration_ms: 500,
           create_response: true,
         };
 
@@ -243,9 +266,7 @@ function App() {
       type: 'session.update',
       session: {
         turn_detection: turnDetection,
-        input_audio_transcription: {
-          model: 'whisper-1'
-        },
+        // Use default transcription model configured in session (gpt-4o-mini-transcribe)
       },
     });
 
@@ -347,20 +368,25 @@ function App() {
   }, [isAudioPlaybackEnabled]);
 
   return (
-    <VoiceInterface
-      sessionStatus={sessionStatus}
-      isPTTActive={isPTTActive}
-      isPTTUserSpeaking={isPTTUserSpeaking}
-      isAudioPlaybackEnabled={isAudioPlaybackEnabled}
-      onToggleConnection={onToggleConnection}
-      onTalkButtonDown={handleTalkButtonDown}
-      onTalkButtonUp={handleTalkButtonUp}
-      onToggleAudioPlayback={() => setIsAudioPlaybackEnabled(!isAudioPlaybackEnabled)}
-      onTogglePTT={() => setIsPTTActive(!isPTTActive)}
-      currentStep={currentStep}
-      completedSteps={completedSteps}
-      currentAgentName={selectedAgentName}
-    />
+    <>
+      <ConnectionBanner status={sessionStatus} onRetry={connectToRealtime} />
+      <ErrorBoundary>
+        <VoiceInterface
+          sessionStatus={sessionStatus}
+          isPTTActive={isPTTActive}
+          isPTTUserSpeaking={isPTTUserSpeaking}
+          isAudioPlaybackEnabled={isAudioPlaybackEnabled}
+          onToggleConnection={onToggleConnection}
+          onTalkButtonDown={handleTalkButtonDown}
+          onTalkButtonUp={handleTalkButtonUp}
+          onToggleAudioPlayback={() => setIsAudioPlaybackEnabled(!isAudioPlaybackEnabled)}
+          onTogglePTT={() => setIsPTTActive(!isPTTActive)}
+          currentStep={currentStep}
+          completedSteps={completedSteps}
+          currentAgentName={selectedAgentName}
+        />
+      </ErrorBoundary>
+    </>
   );
 }
 

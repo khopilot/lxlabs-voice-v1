@@ -81,12 +81,33 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
     [],
   );
 
-  const handleAgentHandoff = (item: any) => {
-    const history = item.context.history;
-    const lastMessage = history[history.length - 1];
-    const agentName = lastMessage.name.split("transfer_to_")[1];
-    currentAgentRef.current = agentName; // Update current agent
-    callbacks.onAgentHandoff?.(agentName);
+  const handleAgentHandoff = (event: any) => {
+    // Prefer explicit agent info from the event payload when available
+    let agentName: string | undefined;
+    try {
+      agentName = event?.agent?.name
+        || event?.payload?.agent?.name
+        || event?.target_agent?.name;
+    } catch {
+      // ignore
+    }
+
+    if (!agentName) {
+      // Fallback to parsing from conversation history if necessary
+      const history = event?.context?.history ?? [];
+      const lastMessage = history[history.length - 1];
+      if (lastMessage?.name?.includes('transfer_to_')) {
+        agentName = lastMessage.name.split('transfer_to_')[1];
+      }
+    }
+
+    if (agentName) {
+      currentAgentRef.current = agentName;
+      callbacks.onAgentHandoff?.(agentName);
+    } else {
+      // Log for debugging if structure changes
+      logServerEvent({ type: 'agent_handoff_unparsed', event }, 'handoff_parse_warning');
+    }
   };
 
   useEffect(() => {

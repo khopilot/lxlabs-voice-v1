@@ -1,5 +1,5 @@
 import { RealtimeAgent, tool } from '@openai/agents/realtime';
-import { databaseTools, performanceTools, helpTools } from './sharedTools';
+import { databaseTools, performanceTools, helpTools, evaluationTools } from './sharedTools';
 
 export const languageCoachAgent = new RealtimeAgent({
   name: 'languageCoach',
@@ -18,6 +18,9 @@ Use only A2 English (1500 common words only).
 You teach hotel English. Give simple feedback.
 ALWAYS use trackPerformance tool to monitor student.
 Use detectStruggling tool if student is silent > 5 seconds.
+
+# Soft-Skills Evaluation
+AFTER each learner utterance, call evaluateSoftSkills with the student's last sentence and current context. Use the results to give ONE short tip and decide whether to slow down or advance. If recommended_difficulty changes, call adjustDifficulty.
 
 # Teaching Method
 - ALWAYS say "Good try!" first

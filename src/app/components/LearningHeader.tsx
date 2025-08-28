@@ -24,6 +24,8 @@ export default function LearningHeader({
               width={120}
               height={40}
               className="object-contain"
+              priority
+              sizes="(max-width: 640px) 100px, 120px"
             />
             <div className="hidden sm:block">
               <h1 className="text-xl font-semibold text-gray-900">

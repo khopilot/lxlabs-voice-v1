@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import PrestigeTranscript from './PrestigeTranscript';
 import { getStepContent, StepContent } from '../data/lessonContent';
+import VUMeter from './VUMeter';
+import CoachTipToast from './CoachTipToast';
 
 interface VoiceInterfaceProps {
   sessionStatus: string;
@@ -45,7 +47,36 @@ export default function VoiceInterface({
   const isConnecting = sessionStatus === 'CONNECTING';
   const [selectedStep, setSelectedStep] = useState<StepContent | null>(null);
 
+  // Keyboard Push-to-Talk: Hold Space to speak
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!isConnected || !isPTTActive) return;
+      if (e.repeat) return;
+      if (e.code === 'Space') {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        e.preventDefault();
+        onTalkButtonDown();
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (!isConnected || !isPTTActive) return;
+      if (e.code === 'Space') {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        e.preventDefault();
+        onTalkButtonUp();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, [isConnected, isPTTActive, onTalkButtonDown, onTalkButtonUp]);
 
+  
   return (
     <div className="h-screen flex flex-col bg-[#0F0F0F] text-white overflow-hidden">
       {/* Header */}
@@ -57,6 +88,8 @@ export default function VoiceInterface({
             width={100}
             height={32}
             className="object-contain brightness-0 invert"
+            priority
+            sizes="100px"
           />
           <div className="h-8 w-px bg-gray-700" />
           <div>
@@ -98,8 +131,8 @@ export default function VoiceInterface({
           )}
           
           {/* Elegant Status Badge */}
-          <div className="mb-8 glass rounded-full px-6 py-2 backdrop-blur-md">
-            <div className="flex items-center space-x-3">
+          <div className="mb-8 glass rounded-full px-6 py-2 backdrop-blur-md" role="status" aria-live="polite">
+            <div className="flex items-center space-x-3" >
               <div className={`w-2 h-2 rounded-full ${
                 !isConnected ? 'bg-gray-400' : 
                 isPTTUserSpeaking ? 'bg-red-400 animate-pulse' : 
@@ -110,6 +143,8 @@ export default function VoiceInterface({
                  isPTTUserSpeaking ? 'Listening to you...' : 
                  'Speak when ready'}
               </span>
+              {/* Input VU Meter */}
+              <VUMeter active={isConnected && (isPTTActive ? isPTTUserSpeaking : true)} />
             </div>
           </div>
 
@@ -151,6 +186,7 @@ export default function VoiceInterface({
                 onMouseUp={onTalkButtonUp}
                 onTouchStart={onTalkButtonDown}
                 onTouchEnd={onTalkButtonUp}
+                aria-pressed={isPTTUserSpeaking}
                 className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
                   isPTTUserSpeaking
                     ? 'bg-red-500 text-white animate-pulse'
@@ -209,6 +245,9 @@ export default function VoiceInterface({
           </div>
         </div>
       </div>
+
+      {/* Coach Tip Toast */}
+      <CoachTipToast />
 
       {/* Lesson Content Modal */}
       {selectedStep && (

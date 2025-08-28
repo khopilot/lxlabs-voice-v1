@@ -60,11 +60,16 @@ export const databaseTools = [
         },
         practiceTime: { type: "number" }
       },
-      required: ["studentId"],
+      // studentId can be inferred from session context if omitted
+      required: [],
       additionalProperties: false
     },
-    execute: async (input) => {
-      const { studentId, lesson, completedStep, newVocabulary = [], errors = [], practiceTime = 0 } = input as any;
+    execute: async (input, details) => {
+      const ctxStudentId = (details as any)?.context?.studentId;
+      const { studentId = ctxStudentId, lesson, completedStep, newVocabulary = [], errors = [], practiceTime = 0 } = input as any;
+      if (!studentId) {
+        throw new Error('studentId is required (missing in input and context)');
+      }
       
       // Get or create student record
       const progress: StudentProgress = studentDatabase.get(studentId) || {
@@ -132,11 +137,16 @@ export const databaseTools = [
       properties: {
         studentId: { type: "string" }
       },
-      required: ["studentId"],
+      // studentId can be inferred from session context if omitted
+      required: [],
       additionalProperties: false
     },
-    execute: async (input) => {
-      const { studentId } = input as { studentId: string };
+    execute: async (input, details) => {
+      const ctxStudentId = (details as any)?.context?.studentId;
+      const { studentId = ctxStudentId } = input as { studentId?: string };
+      if (!studentId) {
+        throw new Error('studentId is required (missing in input and context)');
+      }
       
       const progress = studentDatabase.get(studentId);
       
@@ -197,18 +207,23 @@ export const performanceTools = [
         attemptNumber: { type: "number" },
         silenceDuration: { type: "number" }
       },
-      required: ["studentId"],
+      // studentId can be inferred from session context if omitted
+      required: [],
       additionalProperties: false
     },
-    execute: async (input) => {
+    execute: async (input, details) => {
+      const ctxStudentId = (details as any)?.context?.studentId;
       const { 
-        studentId, 
+        studentId = ctxStudentId, 
         responseTime = 0, 
         wasCorrect = false,
         hesitationDetected = false,
         attemptNumber = 1,
         silenceDuration = 0
       } = input as any;
+      if (!studentId) {
+        throw new Error('studentId is required (missing in input and context)');
+      }
       
       // Get or create metrics
       const metrics = sessionMetrics.get(studentId) || {
@@ -273,11 +288,16 @@ export const performanceTools = [
           enum: ["very_easy", "easy", "normal", "challenging"]
         }
       },
-      required: ["studentId", "currentDifficulty"],
+      // studentId can be inferred from session context if omitted
+      required: ["currentDifficulty"],
       additionalProperties: false
     },
-    execute: async (input) => {
-      const { studentId, currentDifficulty } = input as any;
+    execute: async (input, details) => {
+      const ctxStudentId = (details as any)?.context?.studentId;
+      const { studentId = ctxStudentId, currentDifficulty } = input as any;
+      if (!studentId) {
+        throw new Error('studentId is required (missing in input and context)');
+      }
       
       const metrics = sessionMetrics.get(studentId);
       if (!metrics) {
@@ -487,20 +507,32 @@ export const voiceCommandTools = [
       let response: string;
       let action: string;
       
-      // Handle different commands
-      if (normalizedCommand.includes('help')) {
+      // Khmer keywords supported alongside English
+      const khmer = {
+        help: ['ជួយ', 'ជួយផង', 'សូមជួយ'],
+        repeat: ['ម្តងទៀត', 'ព្យាយាមម្ដងទៀត'],
+        slower: ['យឺតៗ', 'និយាយយឺតៗ'],
+        next: ['បន្ទាប់', 'បន្ត'],
+        pause: ['បញ្ឈប់', 'សម្រាក'],
+        explain: ['ពន្យល់', 'សូមពន្យល់'],
+      };
+
+      const includesAny = (text: string, arr: string[]) => arr.some(k => text.includes(k));
+
+      // Handle different commands (English + Khmer)
+      if (normalizedCommand.includes('help') || includesAny(command, khmer.help)) {
         response = "I'll help you! Listen carefully.";
         action = `HELP: Provide hint for '${context.currentPhrase || 'current phrase'}'`;
         
-      } else if (normalizedCommand.includes('repeat')) {
+      } else if (normalizedCommand.includes('repeat') || includesAny(command, khmer.repeat)) {
         response = "Let me say that again slowly.";
         action = `REPEAT: Say '${context.currentPhrase}' at 40% speed`;
         
-      } else if (normalizedCommand.includes('skip')) {
+      } else if (normalizedCommand.includes('skip') || normalizedCommand.includes('next') || includesAny(command, khmer.next)) {
         response = "Okay, let's try something else.";
         action = "SKIP: Move to next practice item";
         
-      } else if (normalizedCommand.includes('slower') || normalizedCommand.includes('slow')) {
+      } else if (normalizedCommand.includes('slower') || normalizedCommand.includes('slow') || includesAny(command, khmer.slower)) {
         response = "I'll speak more slowly.";
         action = "ADJUST: Reduce speech speed to 40%";
         
@@ -508,11 +540,11 @@ export const voiceCommandTools = [
         response = "Here's how to say it.";
         action = `DEMONSTRATE: Model pronunciation of '${context.currentPhrase}'`;
         
-      } else if (normalizedCommand.includes('meaning') || normalizedCommand.includes('what')) {
+      } else if (normalizedCommand.includes('meaning') || normalizedCommand.includes('what') || includesAny(command, khmer.explain)) {
         response = "Let me explain.";
         action = "EXPLAIN: Provide simple definition";
         
-      } else if (normalizedCommand.includes('break') || normalizedCommand.includes('pause')) {
+      } else if (normalizedCommand.includes('break') || normalizedCommand.includes('pause') || includesAny(command, khmer.pause)) {
         response = "Take your time. Say 'ready' when you want to continue.";
         action = "PAUSE: Wait for student readiness";
         
@@ -524,7 +556,7 @@ export const voiceCommandTools = [
       return {
         response,
         action,
-        supportLevel: normalizedCommand.includes('help') ? 'high' : 'normal'
+        supportLevel: (normalizedCommand.includes('help') || includesAny(command, khmer.help)) ? 'high' : 'normal'
       };
     }
   }),
@@ -546,13 +578,14 @@ export const voiceCommandTools = [
       const helpKeywords = [
         'help', 'don\'t know', 'confused', 'difficult', 'hard',
         'can\'t', 'unable', 'forget', 'what', 'how', 'repeat',
-        'again', 'slower', 'skip', 'next', 'stop'
+        'again', 'slower', 'skip', 'next', 'stop',
+        // Khmer variants
+        'ជួយ', 'សូមជួយ', 'មិនដឹង', 'ពិបាក', 'លំបាក',
+        'ម្តងទៀត', 'យឺតៗ', 'បន្ទាប់', 'បន្ត', 'បញ្ឈប់', 'សូមពន្យល់'
       ];
       
       const lowerResponse = studentResponse.toLowerCase();
-      const detectedKeywords = helpKeywords.filter((keyword: string) => 
-        lowerResponse.includes(keyword)
-      );
+      const detectedKeywords = helpKeywords.filter((keyword: string) => lowerResponse.includes(keyword));
       
       if (detectedKeywords.length > 0) {
         return {
@@ -573,9 +606,74 @@ export const voiceCommandTools = [
 ];
 
 // Export all tools together
+export const evaluationTools = [
+  tool({
+    name: "evaluateSoftSkills",
+    description: "Rates the student's soft skills for hospitality (1-5) and suggests next prompt.",
+    parameters: {
+      type: "object",
+      properties: {
+        studentUtterance: { type: "string" },
+        context: { type: "string" },
+        guestType: { type: "string" },
+      },
+      required: ["studentUtterance"],
+      additionalProperties: false,
+    },
+    execute: async (input) => {
+      const { studentUtterance, context = "", guestType = "" } = input as any;
+      try {
+        const schema = {
+          type: 'object',
+          properties: {
+            warmth: { type: 'integer', minimum: 1, maximum: 5 },
+            politeness: { type: 'integer', minimum: 1, maximum: 5 },
+            clarity: { type: 'integer', minimum: 1, maximum: 5 },
+            empathy: { type: 'integer', minimum: 1, maximum: 5 },
+            active_listening: { type: 'integer', minimum: 1, maximum: 5 },
+            cultural_fit: { type: 'integer', minimum: 1, maximum: 5 },
+            summary: { type: 'string' },
+            one_tip: { type: 'string' },
+            next_prompt: { type: 'string' },
+            recommended_difficulty: { type: 'string', enum: ['very_easy', 'easy', 'normal', 'challenging'] },
+          },
+          required: ['warmth','politeness','clarity','empathy','active_listening','cultural_fit','one_tip','next_prompt','recommended_difficulty'],
+          additionalProperties: false,
+        } as const;
+
+        const body = {
+          model: 'gpt-4o-mini',
+          temperature: 0.1,
+          input: [
+            { type: 'message', role: 'system', content: `You are a hospitality soft-skills evaluator for Cambodian ESL learners. Score each category from 1 (needs work) to 5 (excellent). Be culturally sensitive and reward politeness, warmth, and clarity. Keep tips concise.` },
+            { type: 'message', role: 'user', content: `Utterance: ${studentUtterance}\nContext: ${context}\nGuest type: ${guestType}` },
+          ],
+          text: {
+            format: {
+              type: 'json_schema',
+              json_schema: { name: 'SoftSkillsRubric', schema, strict: true },
+            },
+          },
+        };
+
+        const res = await fetch('/api/responses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) {
+          return { error: 'Failed to evaluate', status: res.status };
+        }
+        const data = await res.json();
+        return data.output_parsed || data.output_text || data.output || { note: 'no_output' };
+      } catch (e: any) {
+        return { error: 'evaluation_error', message: e?.message };
+      }
+    }
+  })
+];
+
+// Export all tools together
 export const allSharedTools = [
   ...databaseTools,
   ...performanceTools,
   ...helpTools,
-  ...voiceCommandTools
+  ...voiceCommandTools,
+  ...evaluationTools,
 ];

@@ -1,5 +1,5 @@
 import { RealtimeAgent, tool } from '@openai/agents/realtime';
-import { databaseTools, performanceTools, helpTools, voiceCommandTools } from './sharedTools';
+import { databaseTools, performanceTools, helpTools, voiceCommandTools, evaluationTools } from './sharedTools';
 
 export const practiceCoordinatorAgent = new RealtimeAgent({
   name: 'practiceCoordinator',
@@ -46,6 +46,7 @@ Available lessons:
 
 # Session Start Protocol
 1. FIRST: Use loadStudentProgress tool to check history
+1a. Student identity: use the session studentId. You may omit studentId in tool calls; the system provides it.
 2. IF returning student: "Welcome back! Let's continue."
 3. IF new student: "Welcome! Let's start with lesson one."
 4. Track all responses with trackPerformance tool
@@ -324,6 +325,7 @@ Let them choose.
     ...performanceTools,
     ...helpTools,
     ...voiceCommandTools,
+    ...evaluationTools,
   ],
 
   handoffs: [], // Will be populated in index.ts

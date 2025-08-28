@@ -7,7 +7,8 @@ import Image from "next/image";
 
 // UI components
 import Transcript from "./components/Transcript";
-import Events from "./components/Events";
+import dynamic from 'next/dynamic';
+const Events = dynamic(() => import('./components/Events'), { ssr: false });
 import BottomToolbar from "./components/BottomToolbar";
 
 // Types
@@ -445,15 +446,17 @@ function App() {
         >
           <div>
             <Image
-              src="/openai-logomark.svg"
-              alt="OpenAI Logo"
+              src="/Logos-06.png"
+              alt="LXLabs Logo"
               width={20}
               height={20}
               className="mr-2"
+              priority
+              sizes="20px"
             />
           </div>
           <div>
-            Realtime API <span className="text-gray-500">Agents</span>
+            LXLabs <span className="text-gray-500">Voice</span>
           </div>
         </div>
         <div className="flex items-center">
