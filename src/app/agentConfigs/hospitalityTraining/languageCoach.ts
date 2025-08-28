@@ -319,6 +319,7 @@ Say: "Good try! Repeat: How can I help?"
     ...databaseTools,
     ...performanceTools,
     ...helpTools,
+    ...evaluationTools,
   ],
 
   handoffs: [], // Will be populated in index.ts

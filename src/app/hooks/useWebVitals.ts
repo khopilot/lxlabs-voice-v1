@@ -13,7 +13,6 @@ export function useWebVitalsLogger(enabled: boolean = process.env.NODE_ENV !== '
 
     const log = (m: VitalsMetric) => {
       // Keep it lightweight – dev-only console log
-      // eslint-disable-next-line no-console
       console.log(`[Vitals] ${m.name}:`, Math.round(m.value));
     };
 
@@ -41,4 +40,3 @@ export function useWebVitalsLogger(enabled: boolean = process.env.NODE_ENV !== '
     return () => obs.disconnect();
   }, [enabled]);
 }
-

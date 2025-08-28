@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 // Components
-import dynamic from "next/dynamic";
 import VoiceInterface from "./components/VoiceInterface";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ConnectionBanner from "./components/ConnectionBanner";
