@@ -24,7 +24,9 @@ export function useWebVitalsLogger(enabled: boolean = process.env.NODE_ENV !== '
           const shift = entry as any;
           if (!shift.hadRecentInput) log({ name: 'CLS', value: shift.value });
         } else if (entry.entryType === 'first-input') {
-          log({ name: 'FID', value: entry.processingStart - entry.startTime });
+          const fi = entry as any; // PerformanceEventTiming in supporting browsers
+          const processingStart = typeof fi.processingStart === 'number' ? fi.processingStart : fi.startTime;
+          log({ name: 'FID', value: Math.max(0, processingStart - fi.startTime) });
         }
       }
     });
